@@ -18,7 +18,8 @@ print("Max component {}% of all nodes".format(
     len(max_component) / nodes * 100
 ))
 print("---A.2---")
-algorithms.precompute(graph)
-# print(algorithms.NODES[7].parents)
-print(algorithms.path_to_u(0, 5))
+algorithms.precompute(max_component)
+# print(algorithms.landmarks)
+# print(algorithms.NODES[5].parents)
+print(algorithms.landmarks_bfs(7, 10))
 print("---------")

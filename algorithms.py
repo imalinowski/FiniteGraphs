@@ -16,16 +16,13 @@ def load_graph(path):
         node_from, node_to = map(int, line.split())
 
         # since graph is undirected
-        if node_from in graph:
-            graph[node_from].add(node_to)
-        else:
-            graph[node_from] = {node_to}
+        if node_from not in graph:
+            graph[node_from] = set()
+        if node_to not in graph:
+            graph[node_to] = set()
 
-        # since graph is undirected
-        if node_to in graph:
-            graph[node_to].add(node_from)
-        else:
-            graph[node_to] = {node_from}
+        graph[node_from].add(node_to)
+        graph[node_to].add(node_from)
 
     return graph
 
@@ -51,9 +48,14 @@ def find_components(graph):  # graph : Dictionary = { node : { node1, node2, nod
     for node in graph:
         if node not in used:
             path = dfs(graph, node)
-            components.append(path)
             used += path
-    return components
+
+            sub_graph = {}
+            for v in path:
+                sub_graph[v] = graph[v]
+            components.append(sub_graph)
+
+    return components  # return sub graphs witch belongs to single component
 
 
 # to do nice to make command to illustrate work
@@ -86,10 +88,12 @@ class Node:
 
 
 NODES: Dict[int, Node] = {}  # dic of pairs key:Node
+landmarks = set()
 
 
-def precompute(graph: dict, log=False):
-    landmarks = [random.choice(list(graph.keys())) for _ in range(3)]
+def precompute(graph, log=False):
+    for _ in range(3):
+        landmarks.add(random.choice(list(graph.keys())))
     for u in landmarks:
         parent_to_u = bfs(graph, u)
         if log:
@@ -100,11 +104,39 @@ def precompute(graph: dict, log=False):
             NODES[node].parent_to(u, parent_to_u[node])
 
 
-def path_to_u(u: int, s: int):
+def path_to(u: int, s: int):
     path = [s]
-    if u not in NODES[s].parents:
-        raise ValueError('{} is not in U nodes'.format(u))
+    if u not in NODES[s].parents.keys():
+        raise ValueError('{} is not in landmarks nodes {}'.format(u, list(NODES[s].parents.keys())))
     while s != u:
         s = NODES[s].parents[u]
         path.append(s)
+    return path
+
+
+def add_path_to_graph(graph: Dict[int, set], path: list):
+    last = None
+    for node in path:
+        if node not in graph.keys():
+            graph[node] = set()
+        if last is not None:
+            graph[last].add(node)
+            graph[node].add(last)
+        last = node
+
+
+def landmarks_bfs(s, t):
+    sub_graph = {}
+    for u in landmarks:
+        add_path_to_graph(sub_graph, path_to(u, s))
+        add_path_to_graph(sub_graph, path_to(u, t))
+
+    # using dfs dinf path in subgraph
+    parent_to_t = bfs(sub_graph, t)
+    path = [s]
+    node = s
+    while node != t:
+        node = parent_to_t[node]
+        path.append(node)
+
     return path
