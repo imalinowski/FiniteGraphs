@@ -92,8 +92,9 @@ landmarks = set()
 
 
 def precompute(graph, log=False):
-    for _ in range(3):
-        landmarks.add(random.choice(list(graph.keys())))
+    # for _ in range(500):
+    #    landmarks.add(random.choice(list(graph.keys())))
+    landmarks.add(6)
     for u in landmarks:
         parent_to_u = bfs(graph, u)
         if log:
@@ -114,8 +115,10 @@ def path_to(u: int, s: int):
     return path
 
 
-def add_path_to_graph(graph: Dict[int, set], path: list):
+def add_path_to_graph(graph: Dict[int, set], path: list, log=False):
     last = None
+    if log:
+        print("add path to sub graph {}".format(path))
     for node in path:
         if node not in graph.keys():
             graph[node] = set()
@@ -125,13 +128,16 @@ def add_path_to_graph(graph: Dict[int, set], path: list):
         last = node
 
 
-def landmarks_bfs(s, t):
+def landmarks_bfs(s, t, log=False):
     sub_graph = {}
     for u in landmarks:
-        add_path_to_graph(sub_graph, path_to(u, s))
-        add_path_to_graph(sub_graph, path_to(u, t))
+        add_path_to_graph(sub_graph, path_to(u, s), log)
+        add_path_to_graph(sub_graph, path_to(u, t), log)
 
-    # using dfs dinf path in subgraph
+    if log:
+        print("sub graph {}".format(sub_graph))
+
+    # using bfs compute path in subgraph
     parent_to_t = bfs(sub_graph, t)
     path = [s]
     node = s
