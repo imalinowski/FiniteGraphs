@@ -53,7 +53,7 @@ def find_components(graph, log=False):  # graph : Dictionary = { node : { node1,
             used += path
             components.append(path)
     if log:
-        print("finding components took {} sec".format(time.time() - now))
+        print("# finding components took {} sec #".format(time.time() - now))
     return components  # return sub graphs witch belongs to single component
 
 
@@ -173,4 +173,19 @@ def compute_r_d_90dist(graph, log=False):
         for v in range(u + 1, len(nodes)):
             dist = max(dist, len(landmarks_bfs(nodes[u], nodes[v])))
         distances.append(dist)
-    return min(distances), max(distances), 0
+    distances.sort()
+    dist90 = distances[round(0.9 * len(distances))]
+    return distances[0], distances[len(distances) - 1], dist90
+
+
+# r 6 d 14 90d 12
+# r 7 d 14 90d 12
+# r 7 d 13 90d 11
+# r 7 d 15 90d 12
+
+# r 6 d 14 90d 12
+# r 7 d 17 90d 13
+# r 5 d 14 90d 12
+# r 6 d 16 90d 15
+
+
