@@ -94,7 +94,11 @@ def node_degree(graph: dict):
             distribution[degree] = 1
     degree = list(distribution.keys())
     nums = list(distribution.values())
+    plt.ylabel('degree of a node')
+    plt.xlabel('number of nodes')
     plt.plot(degree, nums, 'ro')
+    plt.show()
+    plt.loglog(degree, nums, 'ro')
     plt.ylabel('degree of a node')
     plt.xlabel('number of nodes')
     plt.show()
