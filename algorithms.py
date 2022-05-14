@@ -81,6 +81,13 @@ def bfs(graph, start: int, log=False):  # graph : Dictionary = { node : { node1,
     return path
 
 
+def node_degree(graph: dict):
+    min_d = len(min(graph.values(), key=len))
+    max_d = len(max(graph.values(), key=len))
+
+    return min_d, max_d
+
+
 # ----------------------------------------LANDMARK-BFS----------------------------------------
 
 class Node:
@@ -177,7 +184,6 @@ def compute_r_d_90dist(graph, log=False):
     dist90 = distances[round(0.9 * len(distances))]
     return distances[0], distances[len(distances) - 1], dist90
 
-
 # r 6 d 14 90d 12
 # r 7 d 14 90d 12
 # r 7 d 13 90d 11
@@ -188,4 +194,4 @@ def compute_r_d_90dist(graph, log=False):
 # r 5 d 14 90d 12
 # r 6 d 16 90d 15
 
-
+# --------------------------------------------------------------------------------------------
