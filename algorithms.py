@@ -1,7 +1,8 @@
 from collections import deque
 import time
-from typing import List, Dict
+from typing import Dict
 import random
+import matplotlib.pyplot as plt
 
 
 def load_graph(path):
@@ -84,7 +85,19 @@ def bfs(graph, start: int, log=False):  # graph : Dictionary = { node : { node1,
 def node_degree(graph: dict):
     min_d = len(min(graph.values(), key=len))
     max_d = len(max(graph.values(), key=len))
-
+    distribution = dict()
+    for i in graph.values():
+        degree = len(i)
+        if degree in distribution:
+            distribution[degree] += 1
+        else:
+            distribution[degree] = 1
+    degree = list(distribution.keys())
+    nums = list(distribution.values())
+    plt.plot(degree, nums, 'ro')
+    plt.ylabel('degree of a node')
+    plt.xlabel('number of nodes')
+    plt.show()
     return min_d, max_d
 
 
