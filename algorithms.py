@@ -31,13 +31,13 @@ def load_graph(path):
 def dfs(graph, start, log=False):  # graph : Dictionary = { node : { node1, node2, node3} }
     if log:
         print("dfs from {}".format(start))
-    stack, path = deque(), []
+    stack, path = deque(), set()
     stack.append(start)
     while stack:
         node = stack.pop()
         if node in path:
             continue
-        path.append(node)
+        path.add(node)
         for neighbour in graph[node]:
             stack.append(neighbour)
     return path

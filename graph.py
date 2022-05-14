@@ -11,7 +11,7 @@ print("---A.1---")
 print("Nodes {}".format(nodes))
 print("Edges {}".format(edges))
 print("Density {}".format(edges / (nodes * (nodes - 1) / 2)))
-components = algorithms.find_components(graph, True)
+components = algorithms.find_components(graph)
 print("Components {}".format(len(components)))
 max_component = max(components, key=len)
 print("Max component {}% of all nodes".format(
