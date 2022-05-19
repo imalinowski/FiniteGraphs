@@ -4,22 +4,20 @@ from alg_for_metagraphs import *
 import networkx as nx
 import matplotlib.pyplot as plt
 
-
+'''
 def test():
     g, gin = load_graph_directed_and_inverse('test_extremal.txt')
     scc_test = find_scc(g, gin, True)
 
     print(scc_test)
-
-
-# graph_undirected = load_graph_undirected("web-Google.txt")
-# graph_directed, graph_directed_inv = load_graph_directed_and_inverse("web-Google.txt")
-# Блок с считыванием графов в память пк
 '''
+
 # Блок с считыванием графов в память пк
 # Загружаем графы в память компьютера
 graph_undirected = load_graph_undirected("web-Google.txt")
-graph_directed, graph_directed_inv = load_graph_directed_and_inverse("web-Google.txt")
+# graph_directed, graph_directed_inv = load_graph_directed_and_inverse("web-Google.txt")
+
+'''
 # Считаем кол-во вершин
 # 875713
 nodes = len(graph_directed)
@@ -27,11 +25,6 @@ nodes = len(graph_directed)
 # Считаем кол-во ребер
 # 5105039
 edges = sum(len(i) for i in graph_directed.values())
-'''
-'''
-nodes = 875713
-edges = 5105039
-
 
 # Количество компонент слабой связности
 # Занимает где-то 2 минуты
@@ -65,7 +58,7 @@ count_vertex_scc = 0
 for scc in path_scc:
     count_vertex_scc = max(count_vertex_scc, len(scc))
 
-'''
+
 
 now = time.time()
 meta_graph_x = nx.DiGraph()
@@ -76,7 +69,6 @@ nx.draw(meta_graph_x, pos=pos, node_size=2, width=0.2, arrowsize=1)
 print('Это заняло ', time.time() - now)
 plt.show()
 
-'''
 
 print('Число вершин в графе web-Google: ', nodes)
 print('Число ребер в графе web-Google: ', edges)
@@ -87,8 +79,6 @@ print('Доля веришин в наибольшей компоненте сл
 print('Доля веришин в наибольшей компоненте сильной связности: ', count_vertex_scc / nodes)
 print()
 
-'''
-'''
 
 # А теперь запустим find_scc
 now = time.time()
@@ -96,8 +86,8 @@ path_scc = find_scc(graph_directed, graph_directed_inv, log=True)
 print('О чудо, find_scc закончило свою работу. Это заняло ', time.time() - now)
 load_list_to_file(path_scc, 'scc_2.txt')
 print('И более того, она загрузила свой список в файл scc_2.txt')
-'''
-'''
+
+
 
 path_scc = load_list_from_file('scc_2.txt')
 
@@ -109,8 +99,6 @@ print('На основе его создали метаграф')
 load_list_to_file_for_networks(meta_graph, 'meta_graph_2.txt')
 print('И даже загрузили его в файлик')
 
-'''
-'''
 print('Ответы для А3')
 
 graph_networkx = nx.DiGraph()
@@ -121,7 +109,7 @@ di_graph = nx.DiGraph()
 di_graph.add_edges_from(load_graph_to_list_of_edges('web-Google.txt'))
 '''
 
-'''
+path_wcc = load_list_from_file('wcc.txt')
 print("---A.2---")
 # На обработку уходит 2 минуты, всегда разные значения
 max_component = max(path_wcc, key=len)
@@ -141,8 +129,3 @@ print("---A.5---")
 min_d, max_d = node_degree(graph_undirected)
 print(f"degree : min {min_d} max {max_d}")
 print("---------")
-'''
-
-
-
-
