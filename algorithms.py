@@ -84,6 +84,7 @@ def bfs(graph, start: int, log=False):  # graph : Dictionary = { node : { node1,
 
 def node_degree(graph: dict):
     min_d = len(min(graph.values(), key=len))
+    average = round(sum([len(i) for i in graph.values()]) / len(graph.values()))
     max_d = len(max(graph.values(), key=len))
     distribution = dict()
     for i in graph.values():
@@ -104,7 +105,7 @@ def node_degree(graph: dict):
     plt.xlabel('degree of a node')
     plt.ylabel('number of nodes')
     plt.show()
-    return min_d, max_d
+    return min_d, max_d, average
 
 
 # ----------------------------------------LANDMARK-BFS----------------------------------------
