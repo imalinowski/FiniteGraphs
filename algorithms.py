@@ -93,14 +93,16 @@ def node_degree(graph: dict):
         else:
             distribution[degree] = 1
     degree = list(distribution.keys())
-    nums = list(distribution.values())
-    plt.ylabel('degree of a node')
-    plt.xlabel('number of nodes')
+    nums = []
+    for n in list(distribution.values()):
+        nums.append(n / len(graph.keys()))
+    plt.xlabel('degree of a node')
+    plt.ylabel('number of nodes')
     plt.plot(degree, nums, 'ro')
     plt.show()
     plt.loglog(degree, nums, 'ro')
-    plt.ylabel('degree of a node')
-    plt.xlabel('number of nodes')
+    plt.xlabel('degree of a node')
+    plt.ylabel('number of nodes')
     plt.show()
     return min_d, max_d
 
