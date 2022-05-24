@@ -82,10 +82,14 @@ def bfs(graph, start: int, log=False):  # graph : Dictionary = { node : { node1,
     return path
 
 
-def node_degree(graph: dict):
+def node_degree(graph: dict, log=False):
+    if log:
+        print(f"graph >{graph}")
     min_d = len(min(graph.values(), key=len))
     average = round(sum([len(i) for i in graph.values()]) / len(graph.values()))
     max_d = len(max(graph.values(), key=len))
+    if log:
+        print(f"min {min_d}  max {max_d} average {average}")
     distribution = dict()
     for i in graph.values():
         degree = len(i)
@@ -94,12 +98,14 @@ def node_degree(graph: dict):
         else:
             distribution[degree] = 1
     degree = list(distribution.keys())
+
     nums = []
     for n in list(distribution.values()):
         nums.append(n / len(graph.keys()))
     plt.xlabel('degree of a node')
     plt.ylabel('number of nodes')
     plt.plot(degree, nums, 'ro')
+    print("PLEASE! SAVE AND CLOSE CURRENT SHOWING PICTURE!")
     plt.show()
     plt.loglog(degree, nums, 'ro')
     plt.xlabel('degree of a node')

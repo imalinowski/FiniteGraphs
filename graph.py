@@ -1,8 +1,10 @@
 import algorithms
 import time
+import sys
 
-graph = algorithms.load_graph("CA-AstroPh.txt")
-# graph = algorithms.load_graph("test_graph_1.txt")
+filename = sys.argv[1] if(len(sys.argv) >= 2) else "test_graph_1.txt"
+graph = algorithms.load_graph(filename)
+# graph = algorithms.load_graph("CA-AstroPh.txt")
 
 nodes = len(graph)
 edges = sum(len(i) for i in graph.values())
