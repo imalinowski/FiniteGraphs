@@ -65,21 +65,30 @@ def sub_graph(graph: dict, nodes):
     return subgraph
 
 
-# to do nice to make command to illustrate work
-# bfs witch stores the parent in bfs tree
-def bfs(graph, start: int, log=False):  # graph : Dictionary = { node : { node1, node2, node3} }
+# bfs witch stores the parent in bfs tree save_dist - flag to save distances to start
+def bfs(graph, start: int, save_dist=False, log=False):  # graph : Dictionary = { node : { node1, node2, node3} }
     if log:
         print("bfs from {}".format(start))
     queue, path = [], {}  # path : a pair of node : parent to start in tree
     queue.append(start)
     path[start] = start
+
+    dist = {}
+    if save_dist:
+        dist[start] = 0  # path : a pair of node : distance to start in tree
+
     while queue:
         node = queue.pop(0)
         for neighbour in graph[node]:
-            if neighbour not in path.keys():
-                queue.append(neighbour)
-                path[neighbour] = node
-    return path
+            if neighbour in path.keys():
+                continue
+            queue.append(neighbour)
+            path[neighbour] = node
+
+            if save_dist:
+                dist[neighbour] = dist[node] + 1
+
+    return path, dist if save_dist else path
 
 
 def node_degree(graph: dict, log=False):
@@ -121,9 +130,13 @@ class Node:
     def __init__(self, key):
         self.key = key
         self.parents: Dict[int, int] = {}  # dictionary of parents to landmarks
+        self.dist: Dict[int, int] = {}  # dictionary of distances to landmarks
 
     def parent_to(self, u, v):  # parent v to landmark u
         self.parents[u] = v
+
+    def dist_to(self, u, d):  # distance d to landmark u
+        self.dist[u] = d
 
 
 NODES: Dict[int, Node] = {}  # dic of pairs key:Node
@@ -134,13 +147,14 @@ def precompute(graph, log=False):
     for _ in range(3):  # more landmarks - less error, but more time
         landmarks.add(random.choice(list(graph.keys())))
     for u in landmarks:
-        parent_to_u = bfs(graph, u)
+        parent_to_u, dist_to_u = bfs(graph, u, save_dist=True, log=log)
         if log:
             print("path to {} is {}".format(u, parent_to_u))
         for node in parent_to_u.keys():
             if node not in NODES.keys():
                 NODES[node] = Node(node)
             NODES[node].parent_to(u, parent_to_u[node])
+            NODES[node].dist_to(u, dist_to_u[node])
 
 
 def path_to(u: int, s: int, log=False):
@@ -167,6 +181,15 @@ def add_path_to_graph(graph: Dict[int, set], path: list, log=False):
             graph[last].add(node)
             graph[node].add(last)
         last = node
+
+
+def landmarks_basic(s: int, t: int):
+    dist = len(NODES)
+    for u in landmarks:
+        d = NODES[s].dist[u] + NODES[t].dist[u]
+        if d < dist:
+            dist = d
+    return dist
 
 
 def landmarks_bfs(s, t, log=False):
@@ -200,11 +223,14 @@ def compute_r_d_90dist(graph, log=False):
     distances = []
     if log:
         print("compute_r_d_90dist nodes {}".format(nodes))
+        print("compute_r_d_90dist landmarks {}".format(landmarks))
+
     nodes = list(nodes)
     for u in range(len(nodes) - 1):
         dist = 0
         for v in range(u + 1, len(nodes)):
-            dist = max(dist, len(landmarks_bfs(nodes[u], nodes[v])))
+            # dist = max(dist, len(landmarks_bfs(nodes[u], nodes[v])))
+            dist = max(dist, landmarks_basic(nodes[u], nodes[v]))
         distances.append(dist)
     distances.sort()
     dist90 = distances[round(0.9 * len(distances))]
