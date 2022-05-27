@@ -1,5 +1,8 @@
-from collections import deque
+import copy
+from collections import deque, defaultdict
 import time
+from contextlib import suppress
+from itertools import chain, islice
 from typing import Dict
 import random
 import matplotlib.pyplot as plt
@@ -249,7 +252,7 @@ def compute_r_d_90dist(graph, log=False):
 # r 6 d 16 90d 15
 
 # --------------------------------------------------------------------------------------------
-# Алгоримы Величко Кирилла
+# Алгоритмы Величко Кирилла
 
 # Загружаем граф как неориентированный
 def load_graph_undirected(path):
@@ -376,7 +379,7 @@ def dfs_with_time(graph, start, used, time_in, time_out, log=False):
         print("# finding components took {} sec #".format(time.time() - now))
 
 
-# dfs, в котором мы передаем уже поситившиеся вершины
+# dfs, в котором мы передаем уже посетившие вершины
 def dfs_inverse(graph, start, used, log=False):
     now = time.time()
 
@@ -527,3 +530,141 @@ def load_graph_to_list_of_edges(path, log=False):
         print('В памяти компьютера метаграф в виде списка кортежей')
 
     return graph
+
+
+# --------------------------------------------------------------------------------------------
+# Алгоритмы Кондрахина Антона
+
+
+def _find_cliques_in_graph(graph):
+    index = {}
+    neighbours = {}
+    for node in graph:
+        index[node] = len(index)
+        neighbours[node] = {node_1 for node_1 in graph[node] if node_1 not in index}
+    queue = deque(([node], sorted(neighbours[node], key=index.get)) for node in graph)
+
+    while queue:
+        base, common_neighbors = queue.popleft()
+        base, common_neighbors = list(base), list(common_neighbors)
+        yield base
+        for i, node in enumerate(common_neighbors):
+            queue.append(
+                (
+                    chain(base, [node]),
+                    filter(neighbours[node].__contains__, islice(common_neighbors, i + 1, None)),
+                )
+            )
+
+
+def count_k_cliques(graph, k):
+    node_clique = defaultdict(set)
+    for clique in _find_cliques_in_graph(graph):
+        if len(clique) > k:
+            break
+        elif len(clique) == k:
+            for node in clique:
+                node_clique[node].add(frozenset(clique))
+    return node_clique
+
+
+def calculate_local_coeffs(graph_cliques_3_by_node, graph_nodes_degrees):
+    local_coeffs = defaultdict(int)
+    for node, cliques in graph_cliques_3_by_node.items():
+        node_degree = len(graph_nodes_degrees.get(node, []))
+        if node_degree>=2:
+            local_coeffs[node] = 2*len(cliques)/(node_degree*(node_degree-1))
+        else:
+            local_coeffs[node] = 0
+    return local_coeffs
+
+
+def calculate_average_coeff(local_coeffs, graph_nodes_degrees):
+    return sum(local_coeffs.values())/len(graph_nodes_degrees)
+
+
+def С(n, k):
+    if 0 <= k <= n:
+        nn = 1
+        kk = 1
+        for t in range(1, min(k, n - k) + 1):
+            nn *= n
+            kk *= t
+            n -= 1
+        return nn // kk
+    else:
+        return 0
+
+
+def calculate_global_coeff(local_coeffs, graph_nodes_degrees):
+    numerator = 0
+    denominator = 0
+    for node, local_coeff in local_coeffs.items():
+        node_degree = set(graph_nodes_degrees.get(node, []))
+
+        with suppress(KeyError):  # удаляем эту же вершину, если она есть
+            node_degree.remove(node)
+
+        node_degree = len(node_degree)  # кол-во соседей, а не степень вершины
+        c_n_k = С(node_degree, 2)
+        denominator += c_n_k
+        numerator += c_n_k * local_coeff
+
+    return numerator / denominator
+
+
+def calculate_nodes_proportion_random(graph):
+    graph_copy = copy.deepcopy(graph)
+    graph_nodes = list(graph_copy.keys())
+    graph_nodes_len = len(graph_nodes)
+    node_proportions = []
+    for i in range(0, 100, 10):
+        number = round(graph_nodes_len * i * 0.01)
+        nodes_to_delete = random.sample(list(graph_nodes), k=number)
+        graph_edges_after_delete = {key: value for key, value in graph_copy.items() if key not in nodes_to_delete}
+        for nodes in graph_edges_after_delete.values():
+            for node_to_delete in nodes_to_delete:
+                nodes.discard(node_to_delete)
+
+        graph_components_after_delete = find_components(graph_edges_after_delete)
+        new_max_component = max(graph_components_after_delete, key=lambda i: len(i))
+        proportion = len(set(new_max_component)) / (graph_nodes_len - number)
+        node_proportions.append(proportion)
+
+    plt.figure(figsize=(15, 10))
+    plt.title(
+        "Зависимость изменения доли вершин в наибольшей компоненте слабой связности при удалении случайных вершин")
+    plt.xlabel("Процент удаляемых вершин")
+    plt.ylabel("Коэффициент")
+    plt.grid()
+    node_numbers_to_delete = [i for i in range(0, 100, 10)]
+    plt.plot(node_numbers_to_delete, node_proportions)
+    plt.show()
+
+
+def calculate_nodes_proportion_max_degree(graph):
+    node_proportions = []
+    for i in range(0, 100, 10):
+        number = round(len(graph.keys()) * i * 0.01)
+        max_n_nodes = heapq.nlargest(number, graph.items(), key=lambda item: len(item[1]))
+        max_n_nodes = [node[0] for node in max_n_nodes]
+
+        graph_edges_after_delete = {key: value for key, value in graph.items() if key not in max_n_nodes}
+        for nodes in graph_edges_after_delete.values():
+            for node_to_delete in max_n_nodes:
+                nodes.discard(node_to_delete)
+
+        graph_components_after_delete = find_components(graph_edges_after_delete)
+        new_max_component = max(graph_components_after_delete, key=lambda i: len(i))
+        proportion = len(set(new_max_component)) / (len(graph.keys()) - number)
+        node_proportions.append(proportion)
+
+    plt.figure(figsize=(15, 10))
+    plt.title(
+        "Зависимость изменения доли вершин в наибольшей компоненте слабой связности при удалении вершин с наибольшей степенью")
+    plt.xlabel("Процент удаляемых вершин")
+    plt.ylabel("Коэффициент")
+    plt.grid()
+    node_numbers_to_delete = [i for i in range(0, 100, 10)]
+    plt.plot(node_numbers_to_delete, node_proportions)
+    plt.show()
