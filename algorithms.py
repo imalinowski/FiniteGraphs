@@ -3,6 +3,8 @@ import time
 from typing import Dict
 import random
 import matplotlib.pyplot as plt
+import networkx as nx
+import heapq
 
 
 def load_graph(path):
@@ -114,7 +116,7 @@ def node_degree(graph: dict, log=False):
     plt.xlabel('degree of a node')
     plt.ylabel('number of nodes')
     plt.plot(degree, nums, 'ro')
-    print("PLEASE! IN CASE YOU ARE RUNNING FROM TERMINAL > SAVE AND CLOSE CURRENT SHOWING PICTURE!")
+    # print("PLEASE! IN CASE YOU ARE RUNNING FROM TERMINAL > SAVE AND CLOSE CURRENT SHOWING PICTURE!")
     plt.show()
     plt.loglog(degree, nums, 'ro')
     plt.xlabel('degree of a node')
@@ -247,3 +249,281 @@ def compute_r_d_90dist(graph, log=False):
 # r 6 d 16 90d 15
 
 # --------------------------------------------------------------------------------------------
+# Алгоримы Величко Кирилла
+
+# Загружаем граф как неориентированный
+def load_graph_undirected(path):
+    print('Загружаем граф как неориентированный')
+    graph = {}  # graph : Dictionary = { node : { node1, node2, node3} }
+    f = open(path, "r")
+    while True:
+        line = f.readline().strip()
+        if not line:
+            break
+        if line.startswith("#"):
+            continue
+        node_from, node_to = map(int, line.split())
+
+        # since graph is undirected
+        if node_from not in graph:
+            graph[node_from] = set()
+        if node_to not in graph:
+            graph[node_to] = set()
+
+        graph[node_from].add(node_to)
+        graph[node_to].add(node_from)
+
+    return graph
+
+
+# Загружаем граф как ориентированный
+# Уже не используется
+def load_graph_directed(path):
+    print("Loading...{}".format(path))
+    graph = {}  # graph : Dictionary = {node : {node1, node2, node3}}
+
+    f = open(path, "r")
+    while True:
+        # Прочитали очередную строчку,
+        line = f.readline().strip()
+        if not line:
+            break
+        if line.startswith("#"):
+            continue
+        # Ну а это соответственно откуда и куда
+        node_from, node_to = map(int, line.split())
+
+
+        if node_from not in graph:
+            graph[node_from] = set()
+
+        graph[node_from].add(node_to)
+
+    return graph
+
+
+# Загружаем граф прямым и инвертированным
+def load_graph_directed_and_inverse(path):
+    print('Загружаем граф как ориентированный прямой и обратный')
+    graph, graph_inverse = {}, {}
+
+    f = open(path, "r")
+    while True:
+        # Прочитали очередную строчку,
+        line = f.readline().strip()
+        if not line:
+            break
+        if line.startswith("#"):
+            continue
+        # Ну а это соответственно откуда и куда
+        node_from, node_to = map(int, line.split())
+
+        if node_from not in graph:
+            graph[node_from] = set()
+        if node_to not in graph:
+            graph[node_to] = set()
+
+        if node_from not in graph_inverse:
+            graph_inverse[node_from] = set()
+        if node_to not in graph_inverse:
+            graph_inverse[node_to] = set()
+
+
+        graph[node_from].add(node_to)
+        graph_inverse[node_to].add(node_from)
+
+    return graph, graph_inverse
+
+
+# dfs, который считает время выхода для каждой вершины
+# Разобрать обязательно
+graph_time = 0
+def dfs_with_time(graph, start, used, time_in, time_out, log=False):
+    global graph_time
+    now = time.time()
+    counter = 0
+    if log:
+        print("dfs from {}".format(start))
+
+    stack = deque()
+    stack.append((0, start))
+    while stack:
+        task = stack.pop()
+        graph_time += 1
+
+        node = 0
+        if task[0] == 0:
+            node = task[1]
+            counter += 1
+        elif task[0] == 1:
+            time_out[task[1]] = graph_time
+            continue
+
+        if node in used:
+            continue
+
+        used.add(node)
+
+        stack.append((1, node))
+        time_in[node] = graph_time
+
+        for neighbour in graph[node]:
+            stack.append((0, neighbour))
+
+    if log:
+        print('Done dfs')
+        print('Visited: ', counter)
+        print("# finding components took {} sec #".format(time.time() - now))
+
+
+# dfs, в котором мы передаем уже поситившиеся вершины
+def dfs_inverse(graph, start, used, log=False):
+    now = time.time()
+
+    counter = 0
+    if log:
+        print("dfs from {}".format(start))
+    stack, path = deque(), set()
+    stack.append(start)
+    while stack:
+        node = stack.pop()
+
+        if node in used:
+            continue
+
+        used.add(node)
+        path.add(node)
+        stack.append(node)
+
+        for neighbour in graph[node]:
+            if neighbour not in used:
+                stack.append(neighbour)
+
+    if log:
+        print('Done dfs')
+        print('Visited: ', counter)
+        print("# finding components took {} sec #".format(time.time() - now))
+
+    return path
+
+
+# Находим все компоненты слабой связности в виде списка списков
+def find_wcc(graph, log=False):
+    now = time.time()
+    components = []
+    used = set()
+    for node in graph:
+        if node not in used:
+            path = dfs(graph, node, log=False)
+            used = used | path
+            components.append(path)
+    if log:
+        print("# finding components took {} sec #".format(time.time() - now))
+    return components  # return sub graphs witch belongs to single component
+
+
+# Находим все компоненты сильной связности в виде списка списков
+def find_scc(graph, graph_inverse, log=False):
+    now = time.time()
+
+    time_in = {x: 0 for x in graph}
+    time_out = {x: 0 for x in graph}
+
+    used = set()
+    for node in graph:
+        if node not in used:
+            dfs_with_time(graph, node, used, time_in, time_out, log=False)
+
+    if log:
+        print("30% done")
+
+    priority = []
+    for vertex in time_out:
+        heapq.heappush(priority, (-time_out[vertex], vertex))
+
+    components = []
+    used.clear()
+
+    if log:
+        print("50% done")
+
+    while priority:
+        t, v = heapq.heappop(priority)
+        if v not in used:
+            path = dfs_inverse(graph_inverse, v, used, log=False)
+            used = used | path
+            components.append(path)
+
+    if log:
+        print("# finding components took {} sec #".format(time.time() - now))
+    return components
+
+
+# Функция для создания словаря, где вершина - ключ, значение - номер компоненты
+def create_dict_with_index_scc(l, log=False):
+    if log:
+        print('Создаем необходимый словарь для мета-графа')
+    graph_index = {}
+    number_of_component = 0
+    for path in l:
+        number_of_component += 1
+        for elem in path:
+            graph_index[elem] = number_of_component
+    return graph_index
+
+
+# На вход подается изначальный граф, на выходе получаем метаграф в виде {node: {node, node, node}}
+# Возвращает метаграф вида {node : {node, node, node}}, на вход - изначальный граф и граф с индексами компонент
+def create_metagraph(graph_directed, graph_index, log=False):
+    meta_graph = {}
+    for vertex_1 in graph_directed:
+        for vertex_2 in graph_directed[vertex_1]:
+            if graph_index[vertex_1] != graph_index[vertex_2]:
+                if graph_index[vertex_1] not in meta_graph:
+                    meta_graph[graph_index[vertex_1]] = set()
+                meta_graph[graph_index[vertex_1]].add(graph_index[vertex_2])
+
+    return meta_graph
+
+
+# Загружает в файл граф как список ребер из словаря вида {node: {node, node, node}}
+# Нужно для выгрузки в файл метаграфа для последующей работы с ним
+def load_list_to_file_for_networks(meta_graph, path_to_file, log=False):
+    if log:
+        print('Запись графа для networks начата успешно')
+
+    f = open(path_to_file, 'w')
+
+    for vertex in meta_graph:
+        for elem in meta_graph[vertex]:
+            f.write(str(vertex) + ' ' + str(elem) + '\n')
+
+    f.close()
+
+    if log:
+        print('Запись прошла успешно')
+
+
+# Возвращает граф в виде списка кортежей, где кортеж - ребро. Считывается из файла списка ребер
+def load_graph_to_list_of_edges(path, log=False):
+    if log:
+        print("Loading...{}".format(path))
+    graph = []  # graph : Dictionary = {node : {node1, node2, node3}}
+
+    f = open(path, "r")
+    while True:
+        # Прочитали очередную строчку,
+        line = f.readline().strip()
+        if not line:
+            break
+        if line.startswith("#"):
+            continue
+        # Ну а это соответственно откуда и куда
+        node_from, node_to = map(int, line.split())
+
+        graph.append((node_from, node_to))
+
+    if log:
+        print('В памяти компьютера метаграф в виде списка кортежей')
+
+    return graph
